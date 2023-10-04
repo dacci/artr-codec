@@ -87,7 +87,7 @@ pub fn encode(input: &str) -> String {
 
 #[wasm_bindgen]
 pub fn decode(input: &str) -> Result<String, CodecError> {
-    let mut input = input.chars();
+    let mut input = input.chars().filter(|c| !c.is_whitespace());
     let mut output = Vec::with_capacity(256);
 
     while let Some(c) = input.next() {
@@ -151,6 +151,11 @@ mod tests {
         assert_eq_reflexive("A", "愛楽愛");
         assert_eq_reflexive("AA", "愛楽愛た楽た");
         assert_eq_reflexive("AAA", "愛楽愛た楽し楽可");
+    }
+
+    #[test]
+    fn test_decode() {
+        assert_eq!(decode("愛 楽 愛").unwrap(), "A");
     }
 
     #[test]
