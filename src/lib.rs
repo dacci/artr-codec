@@ -17,6 +17,29 @@ impl From<CodecError> for JsValue {
     }
 }
 
+trait TryIterator: Iterator {
+    type Ok;
+    type Err;
+
+    fn try_next(&mut self) -> Result<Option<Self::Ok>, Self::Err>;
+}
+
+impl<I, T, E> TryIterator for I
+where
+    I: Iterator<Item = Result<T, E>>,
+{
+    type Ok = T;
+    type Err = E;
+
+    fn try_next(&mut self) -> Result<Option<Self::Ok>, Self::Err> {
+        match self.next() {
+            None => Ok(None),
+            Some(Ok(t)) => Ok(Some(t)),
+            Some(Err(e)) => Err(e),
+        }
+    }
+}
+
 fn encode_byte(input: u8) -> char {
     match input & 7 {
         0 => '楽',
@@ -87,45 +110,34 @@ pub fn encode(input: &str) -> String {
 
 #[wasm_bindgen]
 pub fn decode(input: &str) -> Result<String, CodecError> {
-    let mut input = input.chars().filter(|c| !c.is_whitespace());
+    let mut input = input
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .map(decode_char);
     let mut output = Vec::with_capacity(256);
 
-    while let Some(c) = input.next() {
-        let mut b = decode_char(c)?;
-
-        let i = input
-            .next()
-            .ok_or(CodecError::TooShort)
-            .and_then(decode_char)?;
+    while let Some(mut b) = input.try_next()? {
+        let i = input.try_next()?.ok_or(CodecError::TooShort)?;
         b = b << 3 | i;
 
-        let i = input
-            .next()
-            .ok_or(CodecError::TooShort)
-            .and_then(decode_char)?;
+        let i = input.try_next()?.ok_or(CodecError::TooShort)?;
         output.push(b << 2 | i >> 1);
-
         b = i;
-        let Some(c) = input.next() else { break };
-        let i = decode_char(c)?;
+
+        let Some(i) = input.try_next()? else { break };
         b = b << 3 | i;
 
-        let c = input.next().ok_or(CodecError::TooShort)?;
-        let i = decode_char(c)?;
+        let i = input.try_next()?.ok_or(CodecError::TooShort)?;
         b = b << 3 | i;
 
-        let c = input.next().ok_or(CodecError::TooShort)?;
-        let i = decode_char(c)?;
+        let i = input.try_next()?.ok_or(CodecError::TooShort)?;
         output.push(b << 1 | i >> 2);
-
         b = i;
 
-        let Some(c) = input.next() else { break };
-        let i = decode_char(c)?;
+        let Some(i) = input.try_next()? else { break };
         b = b << 3 | i;
 
-        let c = input.next().ok_or(CodecError::TooShort)?;
-        let i = decode_char(c)?;
+        let i = input.try_next()?.ok_or(CodecError::TooShort)?;
         output.push(b << 3 | i);
     }
 
