@@ -2,19 +2,20 @@
 
 import { useContext, useState } from 'react';
 import { WasmContext } from '@/context';
-import { Button, ButtonGroup, IconButton, Paper, Snackbar, Stack, TextField } from '@mui/material';
+import { Button, ButtonGroup, IconButton, Snackbar, Stack, TextField } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
 export default function Home() {
   const { artr } = useContext(WasmContext);
+
+  const [rawData, setRawData] = useState('');
+  const [artrData, setArtrData] = useState('');
   const [message, setMessage] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const handleEncode = () => {
     try {
-      const rawData = document.getElementById('raw-data') as HTMLInputElement;
-      const artrData = document.getElementById('artr-data') as HTMLInputElement;
-      artrData.value = artr!.encode(rawData.value);
+      setArtrData(artr!.encode(rawData));
     } catch (e: any) {
       setMessage(e.toString());
       setSnackbarOpen(true);
@@ -23,9 +24,7 @@ export default function Home() {
 
   const handleDecode = () => {
     try {
-      const artrData = document.getElementById('artr-data') as HTMLInputElement;
-      const rawData = document.getElementById('raw-data') as HTMLInputElement;
-      rawData.value = artr!.decode(artrData.value);
+      setRawData(artr!.decode(artrData));
     } catch (e: any) {
       setMessage(e.toString());
       setSnackbarOpen(true);
@@ -49,12 +48,13 @@ export default function Home() {
           FormHelperTextProps={{ style }}
           InputLabelProps={{ style }}
           InputProps={{ style }}
-          id='raw-data'
           inputProps={{ style }}
           label='本音'
           multiline
           placeholder='本音を書いてください'
           style={style}
+          value={rawData}
+          onChange={(e) => setRawData(e.target.value)}
         />
         <ButtonGroup variant='contained' style={{ marginLeft: 'auto', marginRight: 'auto' }}>
           <Button onClick={handleEncode}>🤫 建前化</Button>
@@ -64,12 +64,13 @@ export default function Home() {
           FormHelperTextProps={{ style }}
           InputLabelProps={{ style }}
           InputProps={{ style }}
-          id='artr-data'
           inputProps={{ style }}
           label='建前'
           multiline
           placeholder='建前を書いてください'
           style={style}
+          value={artrData}
+          onChange={(e) => setArtrData(e.target.value)}
         />
       </Stack>
       <Snackbar
