@@ -110,11 +110,11 @@ pub fn encode(input: &str) -> String {
 
 #[wasm_bindgen]
 pub fn decode(input: &str) -> Result<String, CodecError> {
+    let mut output = Vec::with_capacity(input.len() * 3 / 8 + 1);
     let mut input = input
         .chars()
         .filter(|c| !c.is_whitespace())
         .map(decode_char);
-    let mut output = Vec::with_capacity(256);
 
     while let Some(mut b) = input.try_next()? {
         let i = input.try_next()?.ok_or(CodecError::TooShort)?;
