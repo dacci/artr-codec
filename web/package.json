@@ -14,7 +14,7 @@
     "@mui/icons-material": "^5.14.11",
     "@mui/material": "^5.14.11",
     "artr-codec": "file:../pkg",
-    "next": "14.2.15",
+    "next": "14.2.21",
     "react": "^18",
     "react-dom": "^18"
   },
